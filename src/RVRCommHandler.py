@@ -1,1 +1,0 @@
-# Component used to handle communication with the RVR robot
