@@ -1,16 +1,26 @@
 import socket
 import struct
+import time
 from protobuf.message_pb2 import message_pb2
 
 # Component used to handle communication with the server
 class Controller:
     def __init__(self, server_ip, server_port):
+        self.time_interval = 5
         self.server_ip = server_ip
         self.server_port = server_port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     def connect(self):
-        self.sock.connect((self.server_ip, self.server_port))
+        while True:
+            try:
+                print(f"Trying to connect to {self.server_ip}:{self.server_port}...")
+                self.sock.connect((self.server_ip, self.server_port))
+                print("Connected to the server!")
+                break  # Exit the loop once connected
+            except socket.error as e:
+                print(f"Connection failed: {e}. Retrying in {self.retry_interval} seconds...")
+                time.sleep(self.retry_interval)
 
     def close(self):
         self.sock.close()
