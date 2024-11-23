@@ -3,7 +3,7 @@ import board
 import busio
 from adafruit_pca9685 import PCA9685
 from adafruit_motor import servo
-from directions import Direction
+from src.utils.directions import Direction
 
 class CameraServos:
     # Initialize the I2C bus.

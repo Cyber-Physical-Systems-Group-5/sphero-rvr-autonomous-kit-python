@@ -1,12 +1,12 @@
 import socket
 import struct
 import time
-from protobuf.message_pb2 import message_pb2
+import protobuf.message_pb2 as message_pb2
 
 # Component used to handle communication with the server
 class Controller:
     def __init__(self, server_ip, server_port):
-        self.time_interval = 5
+        self.retry_interval = 5
         self.server_ip = server_ip
         self.server_port = server_port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

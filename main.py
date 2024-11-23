@@ -1,5 +1,5 @@
-from utils.camera_servos import CameraServos
-from controller import Controller
+from src.utils.camera_servos import CameraServos
+from src.controller import Controller
 import asyncio
 
 def main(server_ip, server_port):
