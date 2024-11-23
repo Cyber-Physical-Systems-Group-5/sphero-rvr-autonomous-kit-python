@@ -1,6 +1,5 @@
 from utils.camera_servos import CameraServos
 from controller import Controller
-import socket
 import asyncio
 
 def main(server_ip, server_port):
