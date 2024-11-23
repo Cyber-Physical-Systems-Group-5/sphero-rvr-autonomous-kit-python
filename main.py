@@ -1,14 +1,19 @@
 from src.utils.camera_servos import CameraServos
 from src.controller import Controller
+from src.driver import RvrDriver
 import asyncio
 
 def main(server_ip, server_port):
     controller = Controller(server_ip, server_port)
     camera_servos = CameraServos()
+    driver = RvrDriver()
     try:
         print("Trying to connect to server...")
         controller.connect()
         print("Connected to server")
+
+        # Wake up the RVR
+        asyncio.run(driver.wake())
 
         while True:
             #image_data = capture_image(camera)
@@ -18,9 +23,9 @@ def main(server_ip, server_port):
             #sock.sendall(protobuf_data)
             try:
                 proto_message = controller.read_message()
+                driver.update_controls(proto_message)
                 asyncio.run(camera_servos.move_camera(proto_message))
-                #print_proto_message(proto_message)
-                #print(MessageToString(proto_message, as_utf8=True))
+                asyncio.run(driver.drive())
             except Exception as e:
                 print(f"Error: {e}")
 
