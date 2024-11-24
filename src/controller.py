@@ -51,5 +51,17 @@ class Controller:
         # Deserialize the message
         proto_message = message_pb2.ProtoMessage()
         proto_message.ParseFromString(message_data)
+    
+    def send_message(self, proto_message):
+        # if there is no connection, raise an error
+        if not self.sock:
+            raise ValueError("No connection to server")
+        
+        serialized_message = proto_message.SerializeToString()
+        
+        # Send prefix and message
+        length_prefix = len(serialized_message).to_bytes(4, 'big')
 
-        return proto_message
+        self.sock.sendall(length_prefix)
+        self.sock.sendall(serialized_message)
+    
