@@ -11,7 +11,7 @@ To ensure the code runs correctly, you need to compile the Protocol Buffers file
 
 2. Compile the `message.proto` file:
    ```bash
-   protoc --python_out=protobuf/ protobuf/message.proto
+   protoc --python_out=. protobuf/message.proto
    ```
     Run this command from the root of the project directory.
 
