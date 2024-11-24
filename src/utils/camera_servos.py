@@ -25,18 +25,22 @@ class CameraServos:
     def set_angles(self, angle_0, angle_1):
         self.servo_0.angle = angle_0  # Set the servo on channel 0 to the desired angle.
         self.servo_1.angle = angle_1  # Set the servo on channel 1 to the desired angle.
-        time.sleep(3)            # Wait 1 second to allow the servos to reach their positions.
+        time.sleep(1)            # Wait 1 second to allow the servos to reach their positions.
     
     async def move_camera(self, proto_message):
         direction = proto_message.camera_directions[0]
         if (direction == Direction.FORWARD):
-            self.servo_1.angle += self.ANGLE_STEP
+            if self.servo_1.angle + self.ANGLE_STEP <= 180:
+                self.servo_1.angle += self.ANGLE_STEP
         elif (direction == Direction.BACKWARD):
-            self.servo_1.angle -= self.ANGLE_STEP
+            if self.servo_1.angle - self.ANGLE_STEP >= 0:
+                self.servo_1.angle -= self.ANGLE_STEP
         elif (direction == Direction.LEFT):
-            self.servo_0.angle -= self.ANGLE_STEP
+            if self.servo_0.angle - self.ANGLE_STEP >= 0:
+                self.servo_0.angle -= self.ANGLE_STEP
         elif (direction == Direction.RIGHT):
-            self.servo_0.angle += self.ANGLE_STEP
+            if self.servo_0.angle + self.ANGLE_STEP <= 180:
+                self.servo_0.angle += self.ANGLE_STEP
     # destructor
     def __del__(self):
         # Set both servos to 90 degrees at the end.
