@@ -13,7 +13,7 @@ async def initialize_modules(server_ip, server_port, loop):
     controller = Controller(server_ip, server_port)
     camera_servos = CameraServos()
     driver = RvrDriver(loop)
-    camera = Camera()
+    camera = Camera(controller)
     return controller, camera_servos, driver, camera
 
 async def process_commands(controller, driver, camera_servos, camera):
