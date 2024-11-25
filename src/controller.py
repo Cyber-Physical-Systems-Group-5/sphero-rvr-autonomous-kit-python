@@ -2,14 +2,17 @@ import socket
 import struct
 import time
 import protobuf.message_pb2 as message_pb2
+from src.utils.distance_sensor import DistanceSensor
 
 # Component used to handle communication with the server
 class Controller:
-    def __init__(self, server_ip, server_port):
+    def __init__(self, server_ip, server_port, camera):
+        self.camera = camera
         self.retry_interval = 5
         self.server_ip = server_ip
         self.server_port = server_port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.distance_sensor = DistanceSensor()
     
     def connect(self):
         while True:
@@ -52,7 +55,17 @@ class Controller:
         proto_message = message_pb2.ProtoMessage()
         proto_message.ParseFromString(message_data)
     
-    def send_message(self, proto_message):
+    def send_data(self, battery_percentage):
+        # Capture an image
+        proto_message = self.camera.capture_image()
+        # Include distance data
+        proto_message.distance = self.distance_sensor.get_distance()
+        # Include battery percentage
+        proto_message.battery_percentage = battery_percentage
+        # Send the message
+        self.__send_message(proto_message)
+    
+    def __send_message(self, proto_message):
         # if there is no connection, raise an error
         if not self.sock:
             raise ValueError("No connection to server")
