@@ -10,10 +10,10 @@ nest_asyncio.apply()
 
 async def initialize_modules(server_ip, server_port, loop):
     """Initialize and return the required modules."""
-    controller = Controller(server_ip, server_port)
+    camera = Camera(controller)
+    controller = Controller(server_ip, server_port, camera)
     camera_servos = CameraServos()
     driver = RvrDriver(loop)
-    camera = Camera(controller)
     return controller, camera_servos, driver, camera
 
 async def process_commands(controller, driver, camera_servos, camera):
@@ -24,14 +24,15 @@ async def process_commands(controller, driver, camera_servos, camera):
         #print(f"c_dir = {proto_message.camera_directions}")
 
         driver.update_controls(proto_message)
+        battery_percentage = driver.get_battery_percentage()
 
         # Schedule camera and driver operations concurrently
-        capture_image_task = asyncio.create_task(camera.capture_image())
+        send_data_task = asyncio.create_task(controller.send_data(battery_percentage))
         camera_task = asyncio.create_task(camera_servos.move_camera(proto_message))
         drive_task = asyncio.create_task(driver.drive())
 
         # Wait for both tasks to complete
-        await asyncio.gather(camera_task, drive_task, capture_image_task)
+        await asyncio.gather(camera_task, drive_task, send_data_task)
     except Exception as e:
         print(f"Error processing commands: {e}")
 
