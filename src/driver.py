@@ -18,6 +18,10 @@ class RvrDriver:
         await self.rvr.wake()
         await self.rvr.reset_yaw()
     
+    def get_battery_percentage(self):
+        """Return the battery percentage of the RVR."""
+        return self.rvr.get_battery_percentage()
+    
     def update_controls(self, proto_message):
         """Drive the RVR at the given speed and direction."""
         if (len(proto_message.directions) == 0):

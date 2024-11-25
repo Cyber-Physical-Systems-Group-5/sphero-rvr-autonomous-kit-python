@@ -10,7 +10,7 @@ nest_asyncio.apply()
 
 async def initialize_modules(server_ip, server_port, loop):
     """Initialize and return the required modules."""
-    camera = Camera(controller)
+    camera = Camera()
     controller = Controller(server_ip, server_port, camera)
     camera_servos = CameraServos()
     driver = RvrDriver(loop)
@@ -20,6 +20,10 @@ async def process_commands(controller, driver, camera_servos, camera):
     """Process commands from the controller and execute actions concurrently."""
     try:
         proto_message = controller.read_message()
+        if proto_message is None:
+            print("Error: Received None from read_message()")
+        else:
+            print(f"Received proto_message: {proto_message}")
         #print(f"dir = {proto_message.directions}")
         #print(f"c_dir = {proto_message.camera_directions}")
 
