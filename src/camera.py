@@ -23,7 +23,7 @@ class Camera:
     def capture_image(self):
         """Capture an image and return it as a protobuf message."""
         array = self.camera.capture_array("main")
-        image = Image.fromarray(array, 'RGB')
+        image = Image.fromarray(array, 'RGB888')
         # Convert to PNG
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
