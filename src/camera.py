@@ -12,7 +12,7 @@ class Camera:
         self.camera = Picamera2()
 
         self.configuration = self.camera.create_preview_configuration(
-            main={"size": (width, height), "format": "RGB"},
+            main={"size": (width, height), "format": "RGB888"},
             raw={"size": (width, height)}
         )
 
@@ -23,10 +23,10 @@ class Camera:
     def capture_image(self):
         """Capture an image and return it as a protobuf message."""
         array = self.camera.capture_array("main")
-        image = Image.fromarray(array, 'RGB888')
+        image = Image.fromarray(array, 'RGB')
         # Convert to PNG
         buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
+        image.save(buffer, format='JPEG', quality=50)
         # Create protobuf message
         message = message_pb2.ProtoMessage()
         message.image = buffer.getvalue()
@@ -37,4 +37,3 @@ class Camera:
 
     def __del__(self):
         self.__stop()
-    
