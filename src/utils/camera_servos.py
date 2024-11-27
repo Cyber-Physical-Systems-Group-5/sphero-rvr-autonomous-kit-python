@@ -28,6 +28,9 @@ class CameraServos:
         time.sleep(1)            # Wait 1 second to allow the servos to reach their positions.
     
     async def move_camera(self, proto_message):
+        # if there is no message, return
+        if not proto_message:
+            return
         direction = proto_message.camera_directions[0]
         if (direction == Direction.FORWARD):
             if self.servo_1.angle + self.ANGLE_STEP <= 180:
