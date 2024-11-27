@@ -19,26 +19,35 @@ async def initialize_modules(server_ip, server_port, loop):
 async def process_commands(controller, driver, camera_servos, camera):
     """Process commands from the controller and execute actions concurrently."""
     try:
-        proto_message = controller.read_message()
-        if proto_message is None:
-            print("Error: Received None from read_message()")
-        else:
-            print(f"Received proto_message: {proto_message}")
-        #print(f"dir = {proto_message.directions}")
-        #print(f"c_dir = {proto_message.camera_directions}")
+        # Create a task for reading messages
+        read_message_task = asyncio.create_task(controller.read_message())
+        # Proceed with other tasks concurrently
+        while True:
+            proto_message = None
+            # Attempt to get the next message without blocking
+            if read_message_task.done():
+                proto_message = read_message_task.result()
+                if proto_message is not None:
+                    print(f"Received proto_message: {proto_message}")
+                    driver.update_controls(proto_message)
 
-        driver.update_controls(proto_message)
-        battery_percentage = driver.get_battery_percentage()
+                # Restart the read_message_task for the next message
+                read_message_task = asyncio.create_task(controller.read_message())
 
-        # Schedule camera and driver operations concurrently
-        send_data_task = asyncio.create_task(controller.send_data(battery_percentage))
-        camera_task = asyncio.create_task(camera_servos.move_camera(proto_message))
-        drive_task = asyncio.create_task(driver.drive())
+            # Schedule other tasks
+            send_data_task = asyncio.create_task(controller.send_data())
+            drive_task = asyncio.create_task(driver.drive())
 
-        # Wait for both tasks to complete
-        await asyncio.gather(camera_task, drive_task, send_data_task)
+            # Only move the camera if there is a message
+            if proto_message:
+                camera_task = asyncio.create_task(camera_servos.move_camera(proto_message))
+                await asyncio.gather(camera_task, drive_task, send_data_task)
+            else:
+                await asyncio.gather(drive_task, send_data_task)
+
     except Exception as e:
         print(f"Error processing commands: {e}")
+
 
 async def main(server_ip, server_port):
     """Main function to initialize modules and run the control loop."""

@@ -1,6 +1,7 @@
 import socket
 import struct
 import time
+import asyncio
 import protobuf.message_pb2 as message_pb2
 from src.utils.distance_sensor import DistanceSensor
 
@@ -11,8 +12,9 @@ class Controller:
         self.retry_interval = 5
         self.server_ip = server_ip
         self.server_port = server_port
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.distance_sensor = DistanceSensor()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setblocking(False)
     
     def connect(self):
         while True:
@@ -28,40 +30,44 @@ class Controller:
     def close(self):
         self.sock.close()
     
-    def read_message(self):
+    async def read_message(self):
         # if there is no connection, raise an error
         if not self.sock:
             raise ValueError("No connection to server")
         
         # Read the message
+        try:
+            # Read the length prefix (4 bytes)
+            length_prefix = await asyncio.get_event_loop().sock_recv(self.sock, 4)
+            if len(length_prefix) < 4:
+                raise ValueError("Incomplete length prefix received")
 
-        # Read the length prefix (4 bytes)
-        length_prefix = self.sock.recv(4)
-        if len(length_prefix) < 4:
-            raise ValueError("Incomplete length prefix received")
+            # Unpack the length prefix to get the message size
+            message_length = struct.unpack('<I', length_prefix)[0]  # '<I' is little-endian uint32
 
-        # Unpack the length prefix to get the message size
-        message_length = struct.unpack('<I', length_prefix)[0]  # '<I' is little-endian uint32
+            # Read the message
+            message_data = b""
+            while len(message_data) < message_length:
+                chunk = await asyncio.get_event_loop().sock_recv(self.sock, message_length - len(message_data))
+                if not chunk:
+                    raise ValueError("Connection closed before full message was received")
+                message_data += chunk
 
-        # Read the message
-        message_data = b""
-        while len(message_data) < message_length:
-            chunk = self.sock.recv(message_length - len(message_data))
-            if not chunk:
-                raise ValueError("Connection closed before full message was received")
-            message_data += chunk
-
-        # Deserialize the message
-        proto_message = message_pb2.ProtoMessage()
-        proto_message.ParseFromString(message_data)
+            # Deserialize the message
+            proto_message = message_pb2.ProtoMessage()
+            proto_message.ParseFromString(message_data)
+            return proto_message
+        except Exception as e:
+            print(f"Error reading message: {e}")
+            return None
     
-    def send_data(self, battery_percentage):
+    async def send_data(self, battery_percentage=0):
         # Capture an image
         proto_message = self.camera.capture_image()
         # Include distance data
-        proto_message.distance = self.distance_sensor.get_distance()
+        #proto_message.distance = self.distance_sensor.get_distance()
         # Include battery percentage
-        proto_message.battery_percentage = battery_percentage
+        #proto_message.battery_percentage = battery_percentage
         # Send the message
         self.__send_message(proto_message)
     
@@ -77,4 +83,3 @@ class Controller:
 
         self.sock.sendall(length_prefix)
         self.sock.sendall(serialized_message)
-    
