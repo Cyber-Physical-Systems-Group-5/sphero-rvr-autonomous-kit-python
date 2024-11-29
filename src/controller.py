@@ -61,13 +61,16 @@ class Controller:
             print(f"Error reading message: {e}")
             return None
     
-    async def send_data(self, battery_percentage=0):
+    async def send_data(self, send_image=True, battery_percentage=0, distance=0):
+        proto_message = message_pb2.ProtoMessage()
         # Capture an image
-        proto_message = self.camera.capture_image()
-        # Include distance data
-        #proto_message.distance = self.distance_sensor.get_distance()
-        # Include battery percentage
-        #proto_message.battery_percentage = battery_percentage
+        if (send_image):
+            proto_message = self.camera.capture_image()
+        else:
+            # Include distance data
+            proto_message.distance = self.distance_sensor.get_distance()
+            # Include battery percentage
+            proto_message.battery_percentage = battery_percentage
         # Send the message
         self.__send_message(proto_message)
     

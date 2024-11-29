@@ -1,6 +1,7 @@
 import asyncio
 import nest_asyncio
 from src.utils.camera_servos import CameraServos
+from src.utils.distance_sensor import DistanceSensor
 from src.controller import Controller
 from src.driver import RvrDriver
 from src.camera import Camera
@@ -14,7 +15,15 @@ async def initialize_modules(server_ip, server_port, loop):
     controller = Controller(server_ip, server_port, camera)
     camera_servos = CameraServos()
     driver = RvrDriver(loop)
-    return controller, camera_servos, driver, camera
+    distance_sensor = DistanceSensor()
+    return controller, camera_servos, driver, camera, distance_sensor
+
+async def send_rvr_data(controller, battery_percentage, distance):
+    """Send the RVR data to the server."""
+    try:
+        controller.send_data(send_image=False, battery_percentage=battery_percentage, distance=distance)
+    except Exception as e:
+        print(f"Error sending RVR data: {e}")
 
 async def process_commands(controller, driver, camera_servos, camera):
     """Process commands from the controller and execute actions concurrently."""
@@ -52,7 +61,7 @@ async def process_commands(controller, driver, camera_servos, camera):
 async def main(server_ip, server_port):
     """Main function to initialize modules and run the control loop."""
     loop = asyncio.get_event_loop()
-    controller, camera_servos, driver, camera = await initialize_modules(server_ip, server_port, loop)
+    controller, camera_servos, driver, camera, distance_sensor = await initialize_modules(server_ip, server_port, loop)
 
     try:
         print("Trying to connect to server...")
@@ -64,7 +73,9 @@ async def main(server_ip, server_port):
 
         print("Starting command processing loop...")
         while True:
-            await process_commands(controller, driver, camera_servos, camera)
+            asyncio.create_task(process_commands(controller, driver, camera_servos, camera))
+            asyncio.create_task(send_rvr_data(controller, driver.get_battery_percentage(), distance_sensor.get_distance()))
+
     except KeyboardInterrupt:
         print("Program stopped by user.")
     except Exception as e:
