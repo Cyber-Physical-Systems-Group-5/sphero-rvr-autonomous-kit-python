@@ -1,5 +1,6 @@
 import asyncio
 import nest_asyncio
+from multiprocessing import Process
 from src.utils.camera_servos import CameraServos
 from src.utils.distance_sensor import DistanceSensor
 from src.controller import Controller
@@ -8,6 +9,16 @@ from src.camera import Camera
 
 # Add compatibility with nested event loops
 nest_asyncio.apply()
+
+def send_rvr_data(controller, driver, distance_sensor):
+    """Send the RVR data to the server."""
+    while True:
+        battery_percentage = driver.get_battery_percentage()
+        distance = distance_sensor.get_distance()
+        try:
+            controller.send_data(battery_percentage=battery_percentage, distance=distance)
+        except Exception as e:
+            print(f"Error sending RVR data: {e}")
 
 async def initialize_modules(server_ip, server_port, loop):
     """Initialize and return the required modules."""
@@ -44,7 +55,7 @@ async def process_commands(controller, driver, camera_servos, camera):
                 read_message_task = asyncio.create_task(controller.read_message())
 
             # Schedule other tasks
-            send_data_task = asyncio.create_task(controller.send_data())
+            send_data_task = asyncio.create_task(controller.send_image())
             drive_task = asyncio.create_task(driver.drive())
 
             # Only move the camera if there is a message
@@ -58,10 +69,8 @@ async def process_commands(controller, driver, camera_servos, camera):
         print(f"Error processing commands: {e}")
 
 
-async def main(server_ip, server_port):
+async def main(controller, camera_servos, driver, camera):
     """Main function to initialize modules and run the control loop."""
-    loop = asyncio.get_event_loop()
-    controller, camera_servos, driver, camera, distance_sensor = await initialize_modules(server_ip, server_port, loop)
 
     try:
         print("Trying to connect to server...")
@@ -74,7 +83,7 @@ async def main(server_ip, server_port):
         print("Starting command processing loop...")
         while True:
             asyncio.create_task(process_commands(controller, driver, camera_servos, camera))
-            asyncio.create_task(send_rvr_data(controller, driver.get_battery_percentage(), distance_sensor.get_distance()))
+            #asyncio.create_task(send_rvr_data(controller, driver.get_battery_percentage(), distance_sensor.get_distance()))
 
     except KeyboardInterrupt:
         print("Program stopped by user.")
@@ -89,6 +98,9 @@ if __name__ == "__main__":
     SERVER_PORT = 8000  # Server port
 
     try:
-        asyncio.run(main(SERVER_IP, SERVER_PORT))
+        loop = asyncio.get_event_loop()
+        controller, camera_servos, driver, camera, distance_sensor = initialize_modules(SERVER_IP, SERVER_PORT, loop)
+        asyncio.run(main(controller, camera_servos, driver, camera))
+        send_data_process = Process(target=send_rvr_data, args=(controller, driver, distance_sensor))
     except Exception as e:
         print(f"Fatal error in main: {e}")
