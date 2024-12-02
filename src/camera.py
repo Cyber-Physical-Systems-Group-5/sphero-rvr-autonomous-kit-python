@@ -12,7 +12,7 @@ class Camera:
         self.camera = Picamera2()
 
         self.configuration = self.camera.create_preview_configuration(
-            main={"size": (width, height), "format": "RGB888"},
+            main={"size": (width, height), "format": "BGR888"},
             raw={"size": (width, height)}
         )
 
