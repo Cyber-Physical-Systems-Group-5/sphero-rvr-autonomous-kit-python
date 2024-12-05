@@ -1,8 +1,6 @@
 from PIL import Image
-import socket
 import io
 import time
-import asyncio
 from picamera2 import Picamera2
 import protobuf.message_pb2 as message_pb2
 
