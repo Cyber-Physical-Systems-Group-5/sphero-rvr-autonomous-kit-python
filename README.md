@@ -7,9 +7,16 @@ This repository contains Python code for the SparkFun Advanced Autonomous Kit, d
 ### Prerequisites
 To ensure the code runs correctly, you need to compile the Protocol Buffers file used in the project. Follow these steps:
 
-1. Install the Protocol Buffers compiler (`protoc`). For installation instructions, refer to the [official gRPC documentation](https://grpc.io/docs/protoc-installation/).
+1. Make sure the Sphero SDK is installed as shown in their [official guide](https://sdk.sphero.com/raspberry-pi-setup/python-sdk-setup-advanced).
 
-2. Compile the `message.proto` file:
+2. Install the required libraries using
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. Install the Protocol Buffers compiler (`protoc`). For installation instructions, refer to the [official gRPC documentation](https://grpc.io/docs/protoc-installation/).
+
+4. Compile the `message.proto` file:
    ```bash
    protoc --python_out=. protobuf/message.proto
    ```
