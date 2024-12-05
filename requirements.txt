@@ -1,0 +1,6 @@
+adafruit_pca9685==1.0.1
+board==1.0
+nest_asyncio==1.6.0
+picamera2==0.3.23
+Pillow==11.0.0
+sphero_sdk==0.3.4.post2
